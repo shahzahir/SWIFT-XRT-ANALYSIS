@@ -1,0 +1,3 @@
+swifttools>=3.0
+astropy
+matplotlib
