@@ -2,6 +2,8 @@
 
 **An easy, interactive Python tool for making *Swift*-XRT light curves and spectra.**
 
+> 🔒 **The source code is available on request.** See [Requesting access](#requesting-access) below.
+
 `xrt_products.py` uses the official
 [UKSSDC XRT product builder](https://www.swift.ac.uk/user_objects/) Python API
 (`swifttools`). It asks you a few simple questions (source name, what to make,
@@ -16,25 +18,22 @@ reduction (Evans et al. 2007, 2009) runs on the UKSSDC server.
 
 ---
 
-## 1. Installation
+## Features
 
-```bash
-pip install -r requirements.txt        # swifttools, astropy, matplotlib
-```
+- **Step-by-step questions.** Every input shows its *Format* and an *Example*.
+  ENTER accepts the default, `?` gives help, and wrong inputs are explained and asked again.
+- **Sources by name.** Coordinates are looked up automatically (SIMBAD/NED), and
+  several sources can be processed in one run (`3C 279; PKS 0736+017`).
+- **Data selection:** all data, a date range (`YYYY-MM-DD` or MJD), or a list of ObsIDs.
+- **Light curves:** binned per snapshot, per ObsID, in fixed time bins or by counts.
+  Soft/hard bands and hardness ratio, with the time axis in MJD or seconds.
+- **Spectra:** one spectrum, one per ObsID or snapshot, or up to four user-defined time
+  intervals. Fitted with XSPEC (power law / APEC / blackbody) including Galactic and
+  intrinsic (redshifted) absorption.
+- **Convenience:** the e-mail address is remembered, the job can be left running on the
+  server, and earlier jobs can be downloaded later by job ID.
 
-Register your e-mail address with the UKSSDC once. It is free and needs no
-password:
-<https://www.swift.ac.uk/user_objects/register.php>, then click the link in the
-confirmation e-mail.
-
-## 2. Usage
-
-```bash
-python3 xrt_products.py
-```
-
-and answer the questions. Each question shows a **Format** and an **Example**.
-Press **ENTER** to accept the default in `[brackets]`, and type **`?`** for help.
+## Example session
 
 ```
 What do you want to do?
@@ -50,37 +49,26 @@ Source name(s).
    ✓ PKS 0736+017:  RA = 114.82514°   Dec = +1.61795°
 ```
 
-| Step | You are asked for | Accepted format |
-|------|-------------------|-----------------|
-| 1 | Source name(s) | SIMBAD/NED name; several separated by `;`. Coordinates are looked up automatically. If the look-up fails you can type `RA Dec` in degrees or `hh:mm:ss ±dd:mm:ss` |
-| 2 | Products | light curve, spectrum, or both |
-| 2 | Data to use | all data / between two dates (`YYYY-MM-DD`, `YYYY-MM-DD HH:MM` or `MJD 58119`) / list of 11-digit ObsIDs |
-| 3 | Light-curve binning | per snapshot, per ObsID, fixed time bins (seconds) or fixed counts per bin |
-| 3 | Spectra | one spectrum, one per ObsID, or one per snapshot; redshift for each source (optional) |
-| 3 | *Advanced (optional)* | energy band, soft/hard split energy, detection threshold, MJD or seconds time axis, T0, fit models (`powerlaw`, `apec`, `blackbody`), Galactic N<sub>H</sub>, up to 4 user-defined time intervals |
+| Step | Input | Accepted format |
+|------|-------|-----------------|
+| 1 | Source name(s) | SIMBAD/NED name(s) separated by `;`; or `RA Dec` in degrees / `hh:mm:ss ±dd:mm:ss` |
+| 2 | Products & data | light curve / spectrum / both; all data, two dates, or 11-digit ObsIDs |
+| 3 | Details | light-curve binning; number of spectra; redshift of each source |
+| 3 | *Advanced (optional)* | energy band, soft/hard split, detection threshold, T0, fit models, Galactic N<sub>H</sub>, time intervals |
 | 4 | Summary | check everything, then submit |
 
-Your e-mail address is stored in `~/.xrt_products.json`, so you only type it once.
-The script checks the server once a minute. You can press **Ctrl-C** at any time:
-the job keeps running on the server, and you can download it later with menu
-option **2**, which lists your previous jobs.
+## Output
 
-## 3. Output
-
-For every source, the script writes a folder `xrt_output/<source name>/` containing:
+For every source, the tool writes a folder `xrt_output/<source name>/` containing:
 
 | File | Content |
 |------|---------|
 | `lightcurve.png` | light-curve plot |
-| `lightcurve_PC.csv`, `lightcurve_WT.csv` | count-rate light curves (time, errors, rate, errors, ObsID, …) |
-| `lightcurve_*Soft/Hard/HR.csv` | soft-band and hard-band light curves and hardness ratio |
-| `spectral_fits.csv` | fit results for each spectrum: photon index, N<sub>H</sub>, observed and unabsorbed 0.3–10 keV flux with 90 % errors, C-stat/dof |
-| `spectral_fits_full.txt` | everything the server returned about the fits |
+| `lightcurve_*.csv` | count-rate light curves, soft/hard bands and hardness ratio |
+| `spectral_fits.csv` | photon index, N<sub>H</sub>, observed and unabsorbed 0.3–10 keV flux (90 % errors), C-stat/dof |
 | `spectrum/` | source and background `.pi`, `.arf`, `.rmf` files, ready for XSPEC, plus plots of the fits |
-| `lc.tar.gz`, `spec.tar.gz` | the original product archives |
 
-Example fit table, printed to the screen and saved as
-[`examples/PKS0736+017_spectral_fits.csv`](examples/PKS0736+017_spectral_fits.csv):
+Example fit table ([`examples/PKS0736+017_spectral_fits.csv`](examples/PKS0736+017_spectral_fits.csv)):
 
 ```
 spectrum          model      Gamma / kT          flux 0.3-10 keV (erg/cm2/s)        C-stat/dof
@@ -88,22 +76,27 @@ Obs_00036373015   PowerLaw   1.98 +0.35 -0.29    3.53e-12 +7.74e-13 -6.26e-13   
 Obs_00036373016   PowerLaw   1.58 +0.28 -0.17    5.28e-12 +8.56e-13 -8.82e-13       116.9/156
 ```
 
-## 4. Notes
+## Requirements
 
-- Sources with hundreds of observations (e.g. 3C 279) can take an hour or more
-  on the server. A date range is much faster.
-- Dates you type are converted to the server's format automatically. In ranges
-  the server uses `/` in dates because `-` means "to"; the script handles this.
-- The UKSSDC asks users not to submit very large numbers of jobs at once.
+Python ≥ 3.8 with `swifttools`, `astropy` and `matplotlib`, and an e-mail address
+registered (free) at <https://www.swift.ac.uk/user_objects/register.php>.
 
-## 5. Acknowledgement
+## Requesting access
 
-If you use these products in a publication, please acknowledge the UKSSDC and cite:
+The source code is kept in a private repository. To request access, e-mail
+**[zahir.shah@manipal.edu](mailto:zahir.shah@manipal.edu?subject=Access%20request%3A%20SWIFT-XRT-ANALYSIS)**
+with:
 
-- Evans P. A. et al. 2007, A&A, 469, 379 — *An online repository of Swift/XRT light curves of GRBs*
-- Evans P. A. et al. 2009, MNRAS, 397, 1177 — *Methods and results of an automatic analysis of a complete sample of Swift-XRT observations of GRBs*
+- your name and affiliation
+- your intended use
+- your GitHub username
 
-and state that the work made use of data supplied by the UK Swift Science Data Centre at the University of Leicester.
+You will then be given access to the code repository.
+
+## Acknowledgement
+
+Publications that use the products should acknowledge the UKSSDC and cite
+Evans P. A. et al. 2007, A&A, 469, 379 and Evans P. A. et al. 2009, MNRAS, 397, 1177.
 
 ## Author
 
